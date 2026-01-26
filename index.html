@@ -6,74 +6,7 @@
     <title>WhatsApp Broadcast System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(180deg, #128C7E 0%, #075E54 100%);
-            color: white;
-        }
-        .sidebar .nav-link {
-            color: white;
-            padding: 15px 20px;
-            margin: 5px 0;
-            border-radius: 5px;
-            transition: all 0.3s;
-        }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-        .sidebar .nav-link i {
-            margin-right: 10px;
-        }
-        .main-content {
-            padding: 20px;
-        }
-        .card {
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            border: none;
-        }
-        .btn-whatsapp {
-            background-color: #25D366;
-            color: white;
-            border: none;
-        }
-        .btn-whatsapp:hover {
-            background-color: #1da851;
-            color: white;
-        }
-        .logo {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-        .table-container {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        pre {
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            border-left: 3px solid #25D366;
-        }
-        .format-info {
-            font-size: 12px;
-            color: #666;
-        }
-        .csv-preview {
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 12px;
-        }
-        .csv-preview table {
-            font-size: 11px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container-fluid">
@@ -81,7 +14,7 @@
             <!-- Sidebar -->
             <div class="col-md-3 col-lg-2 sidebar p-0">
                 <div class="logo">
-                    <h3><i class="fab fa-whatsapp"></i> WhatsApp Broadcast</h3>
+                    <h3><i class="fab fa-whatsapp"></i> Broadcast</h3>
                 </div>
                 <nav class="nav flex-column p-3">
                     <a class="nav-link active" href="#broadcast" onclick="showPage('broadcast')">
@@ -93,6 +26,13 @@
                     <a class="nav-link" href="#riwayat" onclick="showPage('riwayat')">
                         <i class="fas fa-history"></i> Riwayat
                     </a>
+                    <!-- Tombol Reset (Tersembunyi) -->
+                    <div class="admin-actions mt-5" style="display: none;" id="adminActions">
+                        <hr class="bg-light">
+                        <button class="btn btn-danger btn-sm w-100" onclick="confirmResetAll()">
+                            <i class="fas fa-trash"></i> Reset All Data
+                        </button>
+                    </div>
                 </nav>
             </div>
 
@@ -107,12 +47,24 @@
                             <h5 class="mb-0">Buat Pesan Broadcast</h5>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label">Pilih Kontak</label>
-                                <select class="form-select" id="contactSelect" multiple size="5">
-                                    <option value="all">SEMUA KONTAK</option>
-                                </select>
-                                <small class="text-muted">Gunakan Ctrl+Click untuk memilih banyak kontak</small>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Pencarian NPSN</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="searchNPSN" 
+                                               placeholder="Cari dengan NPSN" onkeyup="searchNPSN()">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Pilih Kontak</label>
+                                    <select class="form-select" id="contactSelect" multiple size="5">
+                                        <option value="all">SEMUA KONTAK</option>
+                                    </select>
+                                    <small class="text-muted">Gunakan Ctrl+Click untuk memilih banyak kontak</small>
+                                </div>
                             </div>
                             
                             <div class="mb-3">
@@ -139,17 +91,23 @@ Surat keterangan kerja Anda sudah siap untuk didownload.
 Terima kasih,
 Admin
                                 </textarea>
-                                <small class="text-muted">Gunakan {nama}, {telp}, {npsn}, {link} untuk variabel</small>
+                                <small class="text-muted">Gunakan {nama}, {telp}, {npsn}, {link}, {pic} untuk variabel</small>
                             </div>
                             
                             <div class="mb-3">
                                 <label class="form-label">Variabel Pengganti</label>
-                                <div class="input-group mb-2">
-                                    <input type="text" class="form-control" id="variableKey" placeholder="Variable (contoh: link)">
-                                    <input type="text" class="form-control" id="variableValue" placeholder="Nilai (contoh: https://example.com)">
-                                    <button class="btn btn-outline-primary" onclick="addVariable()">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <input type="text" class="form-control" id="variableKey" placeholder="Variable (contoh: link)">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <input type="text" class="form-control" id="variableValue" placeholder="Nilai (contoh: https://example.com)">
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <button class="btn btn-outline-primary w-100" onclick="addVariable()">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div id="variablesList" class="border p-2 rounded bg-light">
                                     <small class="text-muted">Belum ada variabel</small>
@@ -185,16 +143,23 @@ Admin
                     
                     <div class="card">
                         <div class="card-header bg-success text-white">
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap">
                                 <h5 class="mb-0">Daftar Kontak</h5>
-                                <div>
-                                    <button class="btn btn-light btn-sm me-2" onclick="exportContacts()">
+                                <div class="mt-2 mt-md-0">
+                                    <div class="input-group me-2 mb-2" style="width: 200px;">
+                                        <input type="text" class="form-control form-control-sm" 
+                                               id="searchContact" placeholder="Cari NPSN/Nama...">
+                                        <button class="btn btn-outline-light btn-sm" onclick="searchContacts()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                    <button class="btn btn-light btn-sm me-2 mb-2" onclick="exportContacts()">
                                         <i class="fas fa-download"></i> Export
                                     </button>
-                                    <button class="btn btn-light btn-sm me-2" onclick="importContacts()">
+                                    <button class="btn btn-light btn-sm me-2 mb-2" onclick="importContacts()">
                                         <i class="fas fa-upload"></i> Import
                                     </button>
-                                    <button class="btn btn-light btn-sm" onclick="addNewContact()">
+                                    <button class="btn btn-light btn-sm mb-2" onclick="addNewContact()">
                                         <i class="fas fa-plus"></i> Tambah
                                     </button>
                                 </div>
@@ -228,6 +193,13 @@ Admin
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div id="contactCount">Total: 0 kontak</div>
+                                <nav>
+                                    <ul class="pagination pagination-sm mb-0" id="pagination">
+                                    </ul>
+                                </nav>
                             </div>
                         </div>
                     </div>
@@ -295,8 +267,8 @@ Admin
                             <input type="text" class="form-control" id="modalJenjang">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">NPSN</label>
-                            <input type="text" class="form-control" id="modalNPSN">
+                            <label class="form-label">NPSN *</label>
+                            <input type="text" class="form-control" id="modalNPSN" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Propinsi</label>
@@ -323,8 +295,8 @@ Admin
                             <textarea class="form-control" id="modalAlamat" rows="2"></textarea>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">PIC</label>
-                            <input type="text" class="form-control" id="modalPIC">
+                            <label class="form-label">PIC *</label>
+                            <input type="text" class="form-control" id="modalPIC" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Nomor Telepon *</label>
@@ -420,6 +392,38 @@ Admin
         </div>
     </div>
 
+    <!-- Modal Reset All -->
+    <div class="modal fade" id="resetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Reset All Data</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <h5>PERINGATAN!</h5>
+                        <p>Anda akan menghapus <strong>SELURUH DATA</strong> termasuk:</p>
+                        <ul>
+                            <li>Semua kontak</li>
+                            <li>Semua riwayat broadcast</li>
+                        </ul>
+                        <p class="mb-0">Tindakan ini <strong>TIDAK DAPAT DIBATALKAN!</strong></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ketik "DELETE ALL" untuk konfirmasi:</label>
+                        <input type="text" class="form-control" id="confirmDelete" placeholder="DELETE ALL">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-danger" onclick="resetAllData()">Reset Semua Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script type="module">
         // Firebase Config
@@ -432,7 +436,10 @@ Admin
             updateDoc, 
             deleteDoc, 
             doc, 
-            serverTimestamp 
+            serverTimestamp,
+            query,
+            where,
+            getCountFromServer
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -451,10 +458,20 @@ Admin
         // Ekspos ke window untuk digunakan di app.js
         window.db = db;
         window.firebaseModules = {
-            collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp
+            collection, addDoc, getDocs, updateDoc, deleteDoc, doc, 
+            serverTimestamp, query, where, getCountFromServer
         };
         
         console.log("Firebase initialized successfully!");
+        
+        // Show admin button after 5 seconds (hidden feature)
+        setTimeout(() => {
+            const adminActions = document.getElementById('adminActions');
+            if (adminActions) {
+                adminActions.style.display = 'block';
+                console.log('Admin actions enabled');
+            }
+        }, 5000);
     </script>
 
     <!-- Bootstrap JS -->

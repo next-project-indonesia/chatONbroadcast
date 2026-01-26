@@ -11,6 +11,82 @@ document.addEventListener('DOMContentLoaded', function() {
     showPage('broadcast');
 });
 
+// FUNGSI FORMAT TELEPON
+function formatPhoneNumber(phone) {
+    if (!phone) return '';
+    
+    // Hapus semua karakter non-digit
+    let cleanPhone = phone.toString().replace(/\D/g, '');
+    
+    // Jika sudah dimulai dengan 62, kembalikan
+    if (cleanPhone.startsWith('62')) {
+        return cleanPhone;
+    }
+    
+    // Jika dimulai dengan 0, ganti dengan 62
+    if (cleanPhone.startsWith('0')) {
+        return '62' + cleanPhone.substring(1);
+    }
+    
+    // Jika dimulai dengan 8 (tanpa 0), tambahkan 62
+    if (cleanPhone.startsWith('8')) {
+        return '62' + cleanPhone;
+    }
+    
+    // Jika dimulai dengan 1-7 (jarang terjadi), tambahkan 62
+    if (/^[1-7]/.test(cleanPhone)) {
+        return '62' + cleanPhone;
+    }
+    
+    // Default: return as is
+    return cleanPhone;
+}
+
+// Format telepon di input field
+function formatPhoneInput(inputElement) {
+    const originalValue = inputElement.value;
+    const formatted = formatPhoneNumber(originalValue);
+    
+    if (formatted !== originalValue) {
+        inputElement.value = formatted;
+        showToast('Nomor telepon dikonversi ke format: ' + formatted);
+    }
+}
+
+// Show toast notification
+function showToast(message) {
+    // Remove existing toast
+    const existingToast = document.querySelector('.toast-message');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Create toast
+    const toast = document.createElement('div');
+    toast.className = 'toast-message alert alert-info position-fixed';
+    toast.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+    `;
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
+
 // Show different pages
 function showPage(pageId) {
     // Hide all pages
@@ -98,7 +174,11 @@ function updateContactsTable() {
         html += `
             <tr>
                 <td>${contact.Nama || '-'}</td>
-                <td>${contact.Telp || '-'}</td>
+                <td>
+                    <span class="badge bg-success">${contact.Telp || '-'}</span>
+                    <br>
+                    <small class="text-muted">Format 62xxx</small>
+                </td>
                 <td>${contact.Direktorat || '-'}</td>
                 <td>${contact.NPSN || '-'}</td>
                 <td>${contact.Propinsi || '-'}</td>
@@ -152,9 +232,14 @@ function editContact(contactId) {
 
 // Save contact to Firestore
 async function saveContact() {
+    let phone = document.getElementById('modalTelp').value.trim();
+    
+    // Format phone number
+    phone = formatPhoneNumber(phone);
+    
     const contactData = {
         Nama: document.getElementById('modalNama').value.trim(),
-        Telp: document.getElementById('modalTelp').value.trim(),
+        Telp: phone,
         Direktorat: document.getElementById('modalDirektorat').value.trim(),
         Jenjang: document.getElementById('modalJenjang').value.trim(),
         NPSN: document.getElementById('modalNPSN').value.trim(),
@@ -168,13 +253,15 @@ async function saveContact() {
     };
     
     // Validation
-    if (!contactData.Nama || !contactData.Telp) {
-        alert('Nama dan Nomor Telepon wajib diisi!');
+    if (!contactData.Nama) {
+        alert('Nama wajib diisi!');
         return;
     }
     
-    // Format phone number (remove + and spaces)
-    contactData.Telp = contactData.Telp.replace(/[+\s]/g, '');
+    if (!contactData.Telp || contactData.Telp.length < 10) {
+        alert('Nomor telepon tidak valid! Minimal 10 digit setelah format 62.');
+        return;
+    }
     
     try {
         if (editingContactId) {
@@ -199,7 +286,7 @@ async function saveContact() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('contactModal'));
         modal.hide();
         
-        alert('Kontak berhasil disimpan!');
+        showToast('Kontak berhasil disimpan!');
         
     } catch (error) {
         console.error("Error saving contact:", error);
@@ -219,7 +306,7 @@ async function deleteContact(contactId) {
         );
         
         await loadContacts();
-        alert('Kontak berhasil dihapus!');
+        showToast('Kontak berhasil dihapus!');
         
     } catch (error) {
         console.error("Error deleting contact:", error);
@@ -307,13 +394,35 @@ async function processCSV() {
                 const line = lines[i].trim();
                 if (!line) continue;
                 
-                // Simple CSV parsing
-                const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                // Simple CSV parsing (handle quoted values)
+                let values = [];
+                let inQuotes = false;
+                let currentValue = '';
+                
+                for (let char of line) {
+                    if (char === '"' && !inQuotes) {
+                        inQuotes = true;
+                    } else if (char === '"' && inQuotes) {
+                        inQuotes = false;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(currentValue.trim());
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                values.push(currentValue.trim());
+                
+                // Remove quotes from values
+                values = values.map(v => v.replace(/^"|"$/g, ''));
                 
                 if (values.length >= 2) {
+                    // Format phone number
+                    const formattedPhone = formatPhoneNumber(values[1]);
+                    
                     const contactData = {
                         Nama: values[0] || '',
-                        Telp: values[1] || '',
+                        Telp: formattedPhone,
                         Direktorat: values[2] || '',
                         Jenjang: values[3] || '',
                         NPSN: values[4] || '',
@@ -328,7 +437,7 @@ async function processCSV() {
                     };
                     
                     // Validate
-                    if (contactData.Nama && contactData.Telp) {
+                    if (contactData.Nama && contactData.Telp && contactData.Telp.length >= 10) {
                         try {
                             await window.firebaseModules.addDoc(
                                 window.firebaseModules.collection(window.db, "contacts"),
@@ -341,6 +450,7 @@ async function processCSV() {
                         }
                     } else {
                         failed++;
+                        console.warn("Invalid contact data:", contactData);
                     }
                 }
             }
@@ -352,7 +462,7 @@ async function processCSV() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
             modal.hide();
             
-            alert(`Import selesai!\nBerhasil: ${imported}\nGagal: ${failed}`);
+            showToast(`Import selesai! Berhasil: ${imported}, Gagal: ${failed}`);
             
         } catch (error) {
             console.error("Error processing CSV:", error);
@@ -588,5 +698,6 @@ window.removeVariable = removeVariable;
 window.previewMessage = previewMessage;
 window.sendBroadcast = sendBroadcast;
 window.processCSV = processCSV;
+window.formatPhoneInput = formatPhoneInput;
 
 console.log("App.js loaded successfully!");

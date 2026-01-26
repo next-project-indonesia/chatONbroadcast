@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Broadcast System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #128C7E 0%, #075E54 100%);
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: white;
+            padding: 15px 20px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        .btn-whatsapp {
+            background-color: #25D366;
+            color: white;
+            border: none;
+        }
+        .btn-whatsapp:hover {
+            background-color: #1da851;
+            color: white;
+        }
+        .logo {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .logo h3 {
+            margin: 0;
+            color: white;
+        }
+        .logo small {
+            color: rgba(255,255,255,0.8);
+        }
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="logo">
+                    <h3><i class="fab fa-whatsapp"></i> WhatsApp Broadcast</h3>
+                    <small>Manajemen Pesan & Kontak</small>
+                </div>
+                <nav class="nav flex-column p-3">
+                    <a class="nav-link active" href="#" onclick="showPage('broadcast')">
+                        <i class="fas fa-broadcast-tower"></i> Broadcast Pesan
+                    </a>
+                    <a class="nav-link" href="#" onclick="showPage('kontak')">
+                        <i class="fas fa-address-book"></i> Manajemen Kontak
+                    </a>
+                    <a class="nav-link" href="#" onclick="showPage('riwayat')">
+                        <i class="fas fa-history"></i> Riwayat Broadcast
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Broadcast Page -->
+                <div id="broadcast-page" class="page-content">
+                    <h2 class="mb-4"><i class="fas fa-broadcast-tower"></i> Broadcast Pesan</h2>
+                    
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Buat Pesan Broadcast</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Pilih Kontak</label>
+                                <select class="form-select" id="contactSelect" multiple>
+                                    <option value="all">Semua Kontak</option>
+                                </select>
+                                <small class="text-muted">Gunakan Ctrl+Click untuk memilih banyak kontak</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Pesan WhatsApp</label>
+                                <textarea class="form-control" id="messageText" rows="10" placeholder="Tulis pesan Anda di sini...">
+Halo {nama},
+
+✉ *SURAT PACKLARING SUDAH SIAP*
+
+Surat keterangan kerja Anda sudah siap untuk didownload.
+
+✉ *Link Download:*
+{link_download}
+
+✉ *Informasi:*
+• Nama: {nama}
+• NIP: {nip}
+• No. Surat: {no_surat}
+
+✉ *Cara Download:*
+1. Buka link di atas
+2. Masukkan nomor KTP: {ktp}
+3. Download surat dalam format PDF
+
+✉ *Masa Aktif Link:* 30 hari
+✉ *Bantuan:* 081383796300
+
+Terima kasih,
+Admin NEXT Cargo Logistics
+                                </textarea>
+                                <small class="text-muted">Gunakan {nama}, {telp}, dll untuk variabel dinamis</small>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Variabel Pengganti</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="variableKey" placeholder="Variable (contoh: link_download)">
+                                            <input type="text" class="form-control" id="variableValue" placeholder="Nilai">
+                                            <button class="btn btn-outline-secondary" onclick="addVariable()">Tambah</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Variabel yang Ditambahkan</label>
+                                        <div id="variablesList" class="border p-2 rounded bg-light">
+                                            <small class="text-muted">Belum ada variabel</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button class="btn btn-secondary" onclick="previewMessage()">
+                                    <i class="fas fa-eye"></i> Preview Pesan
+                                </button>
+                                <button class="btn btn-whatsapp" onclick="sendBroadcast()">
+                                    <i class="fab fa-whatsapp"></i> Kirim Broadcast
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Preview Pesan</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="border rounded p-3 bg-light" id="previewArea">
+                                <p class="text-muted">Preview akan muncul di sini...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kontak Page -->
+                <div id="kontak-page" class="page-content" style="display: none;">
+                    <h2 class="mb-4"><i class="fas fa-address-book"></i> Manajemen Kontak</h2>
+                    
+                    <div class="card">
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Daftar Kontak</h5>
+                            <div>
+                                <button class="btn btn-light btn-sm me-2" onclick="exportContacts()">
+                                    <i class="fas fa-download"></i> Export CSV
+                                </button>
+                                <button class="btn btn-light btn-sm me-2" onclick="importContacts()">
+                                    <i class="fas fa-upload"></i> Import CSV
+                                </button>
+                                <button class="btn btn-light btn-sm" onclick="addNewContact()">
+                                    <i class="fas fa-plus"></i> Tambah Kontak
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table table-hover" id="contactsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Nama</th>
+                                            <th>Telp</th>
+                                            <th>Direktorat</th>
+                                            <th>Jenjang</th>
+                                            <th>NPSN</th>
+                                            <th>Propinsi</th>
+                                            <th>Kabupaten</th>
+                                            <th>Kecamatan</th>
+                                            <th>Kelurahan</th>
+                                            <th>Alamat</th>
+                                            <th>PIC</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="contactsTableBody">
+                                        <tr>
+                                            <td colspan="12" class="text-center">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Riwayat Page -->
+                <div id="riwayat-page" class="page-content" style="display: none;">
+                    <h2 class="mb-4"><i class="fas fa-history"></i> Riwayat Broadcast</h2>
+                    
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">Riwayat Pengiriman</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>Pesan</th>
+                                            <th>Jumlah Kontak</th>
+                                            <th>Status</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody">
+                                        <tr>
+                                            <td colspan="5" class="text-center">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Preview -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-whatsapp text-white">
+                    <h5 class="modal-title">Preview Pesan WhatsApp</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <div id="modalPreviewArea"></div>
+                    </div>
+                    <button class="btn btn-whatsapp w-100" onclick="openWhatsApp()">
+                        <i class="fab fa-whatsapp"></i> Buka di WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Kontak -->
+    <div class="modal fade" id="contactModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Tambah/Ubah Kontak</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nama *</label>
+                                <input type="text" class="form-control" id="modalNama" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Telp *</label>
+                                <input type="text" class="form-control" id="modalTelp" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Direktorat</label>
+                                <input type="text" class="form-control" id="modalDirektorat">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Jenjang</label>
+                                <input type="text" class="form-control" id="modalJenjang">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">NPSN</label>
+                                <input type="text" class="form-control" id="modalNPSN">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Propinsi</label>
+                                <input type="text" class="form-control" id="modalPropinsi">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Kabupaten</label>
+                                <input type="text" class="form-control" id="modalKabupaten">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Kecamatan</label>
+                                <input type="text" class="form-control" id="modalKecamatan">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Kelurahan</label>
+                                <input type="text" class="form-control" id="modalKelurahan">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Alamat</label>
+                                <textarea class="form-control" id="modalAlamat" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">PIC</label>
+                                <input type="text" class="form-control" id="modalPIC">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-success" onclick="saveContact()">Simpan Kontak</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Import CSV -->
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Import Kontak dari CSV</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Upload File CSV</label>
+                        <input type="file" class="form-control" id="csvFile" accept=".csv">
+                        <small class="text-muted">Format kolom: Nama,Telp,Direktorat,Jenjang,NPSN,Propinsi,Kabupaten,Kecamatan,Kelurahan,Alamat,PIC</small>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>Tips:</strong> Pastikan kolom pertama adalah header. Unduh template <a href="#" onclick="downloadTemplate()">di sini</a>.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-info" onclick="processCSV()">Import Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="firebase-config.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+</html>

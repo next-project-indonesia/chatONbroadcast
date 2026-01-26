@@ -3,6 +3,10 @@ let contacts = [];
 let currentVariables = {};
 let editingContactId = null;
 let csvData = [];
+let filteredContacts = [];
+let currentPage = 1;
+const contactsPerPage = 10;
+let allContacts = [];
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -10,6 +14,12 @@ document.addEventListener('DOMContentLoaded', function() {
     loadContacts();
     loadHistory();
     showPage('broadcast');
+    
+    // Add mobile navigation toggle
+    addMobileNavToggle();
+    
+    // Set greeting time in message
+    updateGreetingTime();
 });
 
 // FUNGSI FORMAT TELEPON
@@ -55,7 +65,7 @@ function formatPhoneInput(inputElement) {
 }
 
 // Show toast notification
-function showToast(message) {
+function showToast(message, type = 'info') {
     // Remove existing toast
     const existingToast = document.querySelector('.toast-message');
     if (existingToast) {
@@ -64,16 +74,17 @@ function showToast(message) {
     
     // Create toast
     const toast = document.createElement('div');
-    toast.className = 'toast-message alert alert-info position-fixed';
+    toast.className = `toast-message alert alert-${type} position-fixed`;
     toast.style.cssText = `
         top: 20px;
         right: 20px;
         z-index: 9999;
         min-width: 300px;
+        max-width: 90%;
     `;
     toast.innerHTML = `
         <div class="d-flex align-items-center">
-            <i class="fas fa-info-circle me-2"></i>
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'} me-2"></i>
             <span>${message}</span>
         </div>
     `;
@@ -86,6 +97,47 @@ function showToast(message) {
             toast.remove();
         }
     }, 3000);
+}
+
+// Add mobile navigation toggle
+function addMobileNavToggle() {
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'mobile-nav-toggle';
+    toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+    toggleBtn.onclick = function() {
+        document.querySelector('.sidebar').classList.toggle('active');
+    };
+    
+    document.body.appendChild(toggleBtn);
+}
+
+// Get greeting based on time
+function getGreetingTime() {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'pagi';
+    if (hour < 15) return 'siang';
+    if (hour < 18) return 'sore';
+    return 'malam';
+}
+
+// Update greeting time in message
+function updateGreetingTime() {
+    const greeting = getGreetingTime();
+    const messageTextarea = document.getElementById('messageText');
+    
+    // Check if message contains greeting placeholder
+    if (messageTextarea.value.includes('#waktu')) {
+        const newMessage = `Halo, Selamat ${greeting} pak {pic},\n\n` + 
+                          messageTextarea.value.split('\n').slice(1).join('\n');
+        messageTextarea.value = newMessage;
+    } else if (!messageTextarea.value.includes('Selamat')) {
+        // Add greeting if not present
+        const lines = messageTextarea.value.split('\n');
+        if (lines[0].includes('Halo')) {
+            lines[0] = `Halo, Selamat ${greeting} pak {pic},`;
+            messageTextarea.value = lines.join('\n');
+        }
+    }
 }
 
 // Show different pages
@@ -105,6 +157,11 @@ function showPage(pageId) {
     
     // Find and activate the clicked link
     event.target.classList.add('active');
+    
+    // Close sidebar on mobile
+    if (window.innerWidth < 992) {
+        document.querySelector('.sidebar').classList.remove('active');
+    }
 }
 
 // Load contacts from Firestore
@@ -144,24 +201,99 @@ async function loadContacts() {
             // Add to select dropdown
             const option = document.createElement('option');
             option.value = contact.id;
-            option.textContent = `${contact.Nama} (${contact.Telp})`;
+            option.textContent = `${contact.NPSN} - ${contact.Nama} (${contact.Telp})`;
             contactSelect.appendChild(option);
         });
         
+        allContacts = [...contacts];
+        filteredContacts = [...contacts];
+        
         updateContactsTable();
+        updatePagination();
+        updateContactCount();
+        
         console.log(`Loaded ${contacts.length} contacts`);
         
     } catch (error) {
         console.error("Error loading contacts:", error);
-        alert("Gagal memuat kontak. Periksa console untuk detail.");
+        showToast("Gagal memuat kontak", "danger");
     }
 }
 
-// Update contacts table
+// Search contacts by NPSN or Name
+function searchContacts() {
+    const searchTerm = document.getElementById('searchContact').value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        filteredContacts = [...contacts];
+    } else {
+        filteredContacts = contacts.filter(contact => 
+            (contact.NPSN && contact.NPSN.toLowerCase().includes(searchTerm)) ||
+            (contact.Nama && contact.Nama.toLowerCase().includes(searchTerm)) ||
+            (contact.PIC && contact.PIC.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    currentPage = 1;
+    updateContactsTable();
+    updatePagination();
+    updateContactCount();
+}
+
+// Search NPSN in broadcast page
+function searchNPSN() {
+    const searchTerm = document.getElementById('searchNPSN').value.toLowerCase().trim();
+    const contactSelect = document.getElementById('contactSelect');
+    
+    // Clear all selections
+    Array.from(contactSelect.options).forEach(option => {
+        option.selected = false;
+    });
+    
+    if (!searchTerm) {
+        // Show all contacts
+        Array.from(contactSelect.options).forEach(option => {
+            option.style.display = '';
+        });
+        return;
+    }
+    
+    // Filter options
+    Array.from(contactSelect.options).forEach(option => {
+        if (option.value === 'all') {
+            option.style.display = '';
+        } else {
+            const contact = contacts.find(c => c.id === option.value);
+            const isMatch = contact && (
+                (contact.NPSN && contact.NPSN.toLowerCase().includes(searchTerm)) ||
+                (contact.Nama && contact.Nama.toLowerCase().includes(searchTerm))
+            );
+            option.style.display = isMatch ? '' : 'none';
+            option.selected = isMatch;
+        }
+    });
+    
+    // If no exact match found, show message
+    const visibleOptions = Array.from(contactSelect.options).filter(opt => 
+        opt.style.display !== 'none' && opt.value !== 'all'
+    );
+    
+    if (visibleOptions.length === 0) {
+        showToast(`Tidak ditemukan kontak dengan NPSN/Nama: ${searchTerm}`, 'warning');
+    }
+}
+
+// Clear search
+function clearSearch() {
+    document.getElementById('searchNPSN').value = '';
+    searchNPSN();
+}
+
+// Update contacts table with pagination
 function updateContactsTable() {
     const tbody = document.getElementById('contactsTableBody');
     
-    if (contacts.length === 0) {
+    if (filteredContacts.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="12" class="text-center">Tidak ada data kontak</td>
@@ -170,19 +302,24 @@ function updateContactsTable() {
         return;
     }
     
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * contactsPerPage;
+    const endIndex = Math.min(startIndex + contactsPerPage, filteredContacts.length);
+    const pageContacts = filteredContacts.slice(startIndex, endIndex);
+    
     let html = '';
-    contacts.forEach(contact => {
+    pageContacts.forEach(contact => {
         html += `
             <tr>
                 <td>${contact.Direktorat || '-'}</td>
                 <td>${contact.Jenjang || '-'}</td>
-                <td>${contact.NPSN || '-'}</td>
+                <td><strong>${contact.NPSN || '-'}</strong></td>
                 <td>${contact.Propinsi || '-'}</td>
                 <td>${contact.Kabupaten || '-'}</td>
                 <td>${contact.Kecamatan || '-'}</td>
                 <td>${contact.Kelurahan || '-'}</td>
                 <td>${contact.Nama || '-'}</td>
-                <td>${contact.Alamat || '-'}</td>
+                <td title="${contact.Alamat || ''}">${(contact.Alamat || '').substring(0, 30)}${(contact.Alamat || '').length > 30 ? '...' : ''}</td>
                 <td>${contact.PIC || '-'}</td>
                 <td>
                     <span class="badge bg-success">${contact.Telp || '-'}</span>
@@ -200,6 +337,67 @@ function updateContactsTable() {
     });
     
     tbody.innerHTML = html;
+}
+
+// Update pagination
+function updatePagination() {
+    const pagination = document.getElementById('pagination');
+    const totalPages = Math.ceil(filteredContacts.length / contactsPerPage);
+    
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    
+    // Previous button
+    html += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            html += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                </li>
+            `;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    // Next button
+    html += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    `;
+    
+    pagination.innerHTML = html;
+}
+
+// Change page
+function changePage(page) {
+    if (page < 1 || page > Math.ceil(filteredContacts.length / contactsPerPage)) return;
+    
+    currentPage = page;
+    updateContactsTable();
+    updatePagination();
+}
+
+// Update contact count
+function updateContactCount() {
+    document.getElementById('contactCount').textContent = 
+        `Menampilkan ${Math.min(currentPage * contactsPerPage, filteredContacts.length)} dari ${filteredContacts.length} kontak`;
 }
 
 // Add new contact modal
@@ -236,35 +434,48 @@ function editContact(contactId) {
 // Save contact to Firestore
 async function saveContact() {
     let phone = document.getElementById('modalTelp').value.trim();
-    
-    // Format phone number
-    phone = formatPhoneNumber(phone);
-    
-    const contactData = {
-        Direktorat: document.getElementById('modalDirektorat').value.trim(),
-        Jenjang: document.getElementById('modalJenjang').value.trim(),
-        NPSN: document.getElementById('modalNPSN').value.trim(),
-        Propinsi: document.getElementById('modalPropinsi').value.trim(),
-        Kabupaten: document.getElementById('modalKabupaten').value.trim(),
-        Kecamatan: document.getElementById('modalKecamatan').value.trim(),
-        Kelurahan: document.getElementById('modalKelurahan').value.trim(),
-        Nama: document.getElementById('modalNama').value.trim(),
-        Alamat: document.getElementById('modalAlamat').value.trim(),
-        PIC: document.getElementById('modalPIC').value.trim(),
-        Telp: phone,
-        updatedAt: window.firebaseModules.serverTimestamp()
-    };
+    const npsn = document.getElementById('modalNPSN').value.trim();
+    const nama = document.getElementById('modalNama').value.trim();
+    const pic = document.getElementById('modalPIC').value.trim();
     
     // Validation
-    if (!contactData.Nama) {
+    if (!npsn) {
+        alert('NPSN wajib diisi!');
+        return;
+    }
+    
+    if (!nama) {
         alert('Nama wajib diisi!');
         return;
     }
     
-    if (!contactData.Telp || contactData.Telp.length < 10) {
+    if (!pic) {
+        alert('PIC wajib diisi!');
+        return;
+    }
+    
+    // Format phone number
+    phone = formatPhoneNumber(phone);
+    
+    if (!phone || phone.length < 10) {
         alert('Nomor telepon tidak valid! Minimal 10 digit setelah format 62.');
         return;
     }
+    
+    const contactData = {
+        Direktorat: document.getElementById('modalDirektorat').value.trim(),
+        Jenjang: document.getElementById('modalJenjang').value.trim(),
+        NPSN: npsn,
+        Propinsi: document.getElementById('modalPropinsi').value.trim(),
+        Kabupaten: document.getElementById('modalKabupaten').value.trim(),
+        Kecamatan: document.getElementById('modalKecamatan').value.trim(),
+        Kelurahan: document.getElementById('modalKelurahan').value.trim(),
+        Nama: nama,
+        Alamat: document.getElementById('modalAlamat').value.trim(),
+        PIC: pic,
+        Telp: phone,
+        updatedAt: window.firebaseModules.serverTimestamp()
+    };
     
     try {
         if (editingContactId) {
@@ -289,11 +500,11 @@ async function saveContact() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('contactModal'));
         modal.hide();
         
-        showToast('Kontak berhasil disimpan!');
+        showToast('Kontak berhasil disimpan!', 'success');
         
     } catch (error) {
         console.error("Error saving contact:", error);
-        alert("Gagal menyimpan kontak: " + error.message);
+        showToast("Gagal menyimpan kontak: " + error.message, "danger");
     }
 }
 
@@ -309,11 +520,11 @@ async function deleteContact(contactId) {
         );
         
         await loadContacts();
-        showToast('Kontak berhasil dihapus!');
+        showToast('Kontak berhasil dihapus!', 'success');
         
     } catch (error) {
         console.error("Error deleting contact:", error);
-        alert("Gagal menghapus kontak: " + error.message);
+        showToast("Gagal menghapus kontak: " + error.message, "danger");
     }
 }
 
@@ -358,18 +569,12 @@ function previewCSV() {
     reader.onload = function(e) {
         try {
             const content = e.target.result;
-            const lines = content.split('\n').filter(line => line.trim() !== '');
             
-            if (lines.length === 0) {
-                showToast('File CSV kosong!');
-                return;
-            }
-            
-            // Parse CSV dengan benar
+            // Parse CSV
             const parsedData = parseCSV(content);
             
             if (parsedData.length === 0) {
-                showToast('Tidak ada data yang bisa diparsing!');
+                showToast('Tidak ada data yang bisa diparsing!', 'warning');
                 return;
             }
             
@@ -401,11 +606,11 @@ function previewCSV() {
             document.getElementById('previewTableBody').innerHTML = previewHTML;
             document.getElementById('csvPreview').style.display = 'block';
             
-            showToast(`Berhasil memuat ${parsedData.length} baris data`);
+            showToast(`Berhasil memuat ${parsedData.length} baris data`, 'success');
             
         } catch (error) {
             console.error("Error previewing CSV:", error);
-            showToast('Error memparsing file CSV: ' + error.message);
+            showToast('Error memparsing file CSV: ' + error.message, 'danger');
         }
     };
     
@@ -415,17 +620,16 @@ function previewCSV() {
 // Parse CSV dengan format kolom spesifik
 function parseCSV(content) {
     const rows = [];
-    const lines = content.split('\n');
+    const lines = content.split('\n').filter(line => line.trim() !== '');
     
-    // Header tidak wajib, kita langsung mapping ke kolom yang ditentukan
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         
-        // Parse baris CSV dengan benar (handle quotes)
+        // Parse baris CSV
         const values = parseCSVLine(line);
         
-        // Map values ke kolom sesuai urutan yang ditentukan
+        // Pastikan kita memiliki minimal 11 kolom
         if (values.length >= 11) {
             const rowData = {
                 Direktorat: values[0] || '',
@@ -441,11 +645,13 @@ function parseCSV(content) {
                 Telp: values[10] || ''
             };
             
-            // Hanya tambahkan jika ada Nama dan Telp
-            if (rowData.Nama && rowData.Telp) {
+            // Hanya tambahkan jika ada NPSN, Nama, PIC dan Telp
+            if (rowData.NPSN && rowData.Nama && rowData.PIC && rowData.Telp) {
                 rows.push(rowData);
+            } else {
+                console.warn(`Baris ${i+1} tidak memiliki data wajib:`, rowData);
             }
-        } else if (values.length > 0) {
+        } else {
             console.warn(`Baris ${i+1} tidak memiliki cukup kolom:`, values);
         }
     }
@@ -453,7 +659,7 @@ function parseCSV(content) {
     return rows;
 }
 
-// Parse satu baris CSV dengan handle quotes
+// Parse satu baris CSV
 function parseCSVLine(line) {
     const values = [];
     let current = '';
@@ -461,25 +667,24 @@ function parseCSVLine(line) {
     
     for (let i = 0; i < line.length; i++) {
         const char = line[i];
-        const nextChar = line[i + 1];
         
-        if (char === '"' && !inQuotes) {
-            inQuotes = true;
-        } else if (char === '"' && inQuotes && nextChar === '"') {
-            current += '"';
-            i++;
-        } else if (char === '"' && inQuotes) {
-            inQuotes = false;
+        if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
         } else if (char === ',' && !inQuotes) {
-            values.push(current.trim());
+            values.push(current);
             current = '';
         } else {
             current += char;
         }
     }
     
-    values.push(current.trim());
-    return values.map(v => v.replace(/^"|"$/g, ''));
+    values.push(current);
+    return values.map(v => v.trim().replace(/^"|"$/g, ''));
 }
 
 // Process CSV file
@@ -523,13 +728,25 @@ async function processCSV() {
                 updatedAt: window.firebaseModules.serverTimestamp()
             };
             
-            // Validate
-            if (contactData.Nama && contactData.Telp && contactData.Telp.length >= 10) {
+            // Validate required fields
+            if (contactData.NPSN && contactData.Nama && contactData.PIC && contactData.Telp && contactData.Telp.length >= 10) {
                 try {
-                    await window.firebaseModules.addDoc(
-                        window.firebaseModules.collection(window.db, "contacts"),
-                        contactData
-                    );
+                    // Check if contact with same NPSN exists
+                    const existingContact = contacts.find(c => c.NPSN === contactData.NPSN);
+                    
+                    if (existingContact) {
+                        // Update existing
+                        await window.firebaseModules.updateDoc(
+                            window.firebaseModules.doc(window.db, "contacts", existingContact.id),
+                            contactData
+                        );
+                    } else {
+                        // Add new
+                        await window.firebaseModules.addDoc(
+                            window.firebaseModules.collection(window.db, "contacts"),
+                            contactData
+                        );
+                    }
                     imported++;
                 } catch (error) {
                     console.error(`Error importing contact ${i+1}:`, error);
@@ -538,7 +755,7 @@ async function processCSV() {
                 }
             } else {
                 failed++;
-                errors.push(`Baris ${i+1}: Data tidak valid (Nama: ${contactData.Nama}, Telp: ${contactData.Telp})`);
+                errors.push(`Baris ${i+1}: Data tidak lengkap`);
             }
         }
         
@@ -566,17 +783,18 @@ async function processCSV() {
 function createProgressModal() {
     const modalHTML = `
         <div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-sm">
                 <div class="modal-content">
                     <div class="modal-header bg-info text-white">
                         <h5 class="modal-title">Importing Data...</h5>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body text-center">
+                        <div class="loading-spinner mb-3"></div>
                         <div class="progress mb-3">
                             <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
                                  style="width: 0%"></div>
                         </div>
-                        <p id="progressText">Memulai import...</p>
+                        <p id="progressText" class="small">Memulai import...</p>
                     </div>
                 </div>
             </div>
@@ -610,7 +828,7 @@ function updateProgressModal(modal, current, total) {
     }
     
     if (progressText) {
-        progressText.textContent = `Memproses ${current} dari ${total} data (${percentage}%)`;
+        progressText.textContent = `Memproses ${current} dari ${total} data`;
     }
 }
 
@@ -636,8 +854,13 @@ function showImportResults(imported, failed, errors) {
         }
     }
     
-    alert(message);
-    showToast(`Import selesai! Berhasil: ${imported}, Gagal: ${failed}`);
+    if (failed === 0) {
+        alert(message);
+        showToast(`Import berhasil! ${imported} data ditambahkan`, 'success');
+    } else {
+        alert(message);
+        showToast(`Import selesai! Berhasil: ${imported}, Gagal: ${failed}`, 'warning');
+    }
 }
 
 // Export contacts to CSV
@@ -672,6 +895,8 @@ function exportContacts() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    showToast(`Data berhasil diexport (${contacts.length} kontak)`, 'success');
 }
 
 // Add variable for message
@@ -704,17 +929,22 @@ function updateVariablesList() {
         return;
     }
     
-    let html = '';
+    let html = '<div class="row">';
     for (const [key, value] of Object.entries(currentVariables)) {
         html += `
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span><strong>{${key}}</strong>: ${value}</span>
-                <button class="btn btn-sm btn-danger" onclick="removeVariable('${key}')">
-                    <i class="fas fa-times"></i>
-                </button>
+            <div class="col-12 col-sm-6 mb-2">
+                <div class="d-flex justify-content-between align-items-center p-2 bg-white border rounded">
+                    <div>
+                        <strong>{${key}}</strong>: ${value}
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="removeVariable('${key}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
         `;
     }
+    html += '</div>';
     
     container.innerHTML = html;
 }
@@ -729,10 +959,15 @@ function removeVariable(key) {
 // Preview message with variables
 function previewMessage() {
     let message = document.getElementById('messageText').value;
+    const greeting = getGreetingTime();
+    
+    // Replace greeting
+    message = message.replace(/#waktu/gi, greeting);
+    message = message.replace(/{waktu}/gi, greeting);
     
     // Replace variables
     for (const [key, value] of Object.entries(currentVariables)) {
-        const regex = new RegExp(`{${key}}`, 'g');
+        const regex = new RegExp(`{${key}}`, 'gi');
         message = message.replace(regex, value);
     }
     
@@ -765,31 +1000,51 @@ function sendBroadcast() {
         return;
     }
     
+    if (!confirm(`Kirim broadcast ke ${selectedContacts.length} kontak?`)) {
+        return;
+    }
+    
     // Store for WhatsApp
     window.selectedContacts = selectedContacts;
     window.broadcastMessage = document.getElementById('messageText').value;
+    window.currentContactIndex = 0;
     
     // Open first contact in WhatsApp
-    openWhatsAppForContact(selectedContacts[0]);
+    openNextWhatsAppContact();
     
     // Save to history
     saveToHistory(selectedContacts.length);
 }
 
-// Open WhatsApp for a contact
-function openWhatsAppForContact(contact) {
+// Open WhatsApp for next contact
+function openNextWhatsAppContact() {
+    if (window.currentContactIndex >= window.selectedContacts.length) {
+        showToast(`Broadcast selesai! ${window.selectedContacts.length} pesan dikirim`, 'success');
+        return;
+    }
+    
+    const contact = window.selectedContacts[window.currentContactIndex];
+    
     if (!contact || !contact.Telp) {
-        alert('Kontak tidak valid!');
+        window.currentContactIndex++;
+        setTimeout(openNextWhatsAppContact, 1000);
         return;
     }
     
     // Get message
     let message = window.broadcastMessage;
+    const greeting = getGreetingTime();
     
     // Replace contact variables
+    message = message.replace(/#waktu/gi, greeting);
+    message = message.replace(/{waktu}/gi, greeting);
     message = message.replace(/{nama}/gi, contact.Nama || '');
     message = message.replace(/{telp}/gi, contact.Telp || '');
     message = message.replace(/{npsn}/gi, contact.NPSN || '');
+    message = message.replace(/{pic}/gi, contact.PIC || '');
+    message = message.replace(/{direktorat}/gi, contact.Direktorat || '');
+    message = message.replace(/{jenjang}/gi, contact.Jenjang || '');
+    message = message.replace(/{propinsi}/gi, contact.Propinsi || '');
     
     // Replace other variables
     for (const [key, value] of Object.entries(currentVariables)) {
@@ -803,6 +1058,10 @@ function openWhatsAppForContact(contact) {
     
     // Open in new tab
     window.open(whatsappUrl, '_blank');
+    
+    // Move to next contact after delay
+    window.currentContactIndex++;
+    setTimeout(openNextWhatsAppContact, 3000);
 }
 
 // Save broadcast to history
@@ -877,13 +1136,67 @@ function updateHistoryTable(historyItems) {
             <tr>
                 <td>${date}</td>
                 <td title="${item.message}">${shortMessage}</td>
-                <td>${item.contactCount}</td>
+                <td><span class="badge bg-info">${item.contactCount}</span></td>
                 <td><span class="badge bg-success">Terkirim</span></td>
             </tr>
         `;
     });
     
     tbody.innerHTML = html;
+}
+
+// Confirm reset all data
+function confirmResetAll() {
+    const modal = new bootstrap.Modal(document.getElementById('resetModal'));
+    modal.show();
+}
+
+// Reset all data
+async function resetAllData() {
+    const confirmText = document.getElementById('confirmDelete').value;
+    
+    if (confirmText !== 'DELETE ALL') {
+        alert('Harap ketik "DELETE ALL" untuk konfirmasi!');
+        return;
+    }
+    
+    try {
+        // Delete all contacts
+        const contactsSnapshot = await window.firebaseModules.getDocs(
+            window.firebaseModules.collection(window.db, "contacts")
+        );
+        
+        let deletedContacts = 0;
+        for (const doc of contactsSnapshot.docs) {
+            await window.firebaseModules.deleteDoc(doc.ref);
+            deletedContacts++;
+        }
+        
+        // Delete all history
+        const historySnapshot = await window.firebaseModules.getDocs(
+            window.firebaseModules.collection(window.db, "history")
+        );
+        
+        let deletedHistory = 0;
+        for (const doc of historySnapshot.docs) {
+            await window.firebaseModules.deleteDoc(doc.ref);
+            deletedHistory++;
+        }
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('resetModal'));
+        modal.hide();
+        
+        // Reload data
+        await loadContacts();
+        await loadHistory();
+        
+        showToast(`Reset berhasil! ${deletedContacts} kontak dan ${deletedHistory} riwayat dihapus`, 'success');
+        
+    } catch (error) {
+        console.error("Error resetting data:", error);
+        showToast("Gagal reset data: " + error.message, "danger");
+    }
 }
 
 // Make functions available globally
@@ -901,5 +1214,11 @@ window.sendBroadcast = sendBroadcast;
 window.processCSV = processCSV;
 window.formatPhoneInput = formatPhoneInput;
 window.previewCSV = previewCSV;
+window.searchContacts = searchContacts;
+window.searchNPSN = searchNPSN;
+window.clearSearch = clearSearch;
+window.changePage = changePage;
+window.confirmResetAll = confirmResetAll;
+window.resetAllData = resetAllData;
 
 console.log("App.js loaded successfully!");

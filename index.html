@@ -65,6 +65,14 @@
             font-size: 12px;
             color: #666;
         }
+        .csv-preview {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .csv-preview table {
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
@@ -110,6 +118,26 @@
                             <div class="mb-3">
                                 <label class="form-label">Pesan WhatsApp</label>
                                 <textarea class="form-control" id="messageText" rows="10" placeholder="Tulis pesan Anda di sini...">
+Halo {nama},
+
+✉ *SURAT PACKLARING SUDAH SIAP*
+
+Surat keterangan kerja Anda sudah siap untuk didownload.
+
+✉ *Informasi:*
+• Nama: {nama}
+• Telp: {telp}
+• NPSN: {npsn}
+
+✉ *Cara Download:*
+1. Buka link: {link}
+2. Download surat dalam format PDF
+
+✉ *Masa Aktif Link:* 30 hari
+✉ *Bantuan:* 081383796300
+
+Terima kasih,
+Admin
                                 </textarea>
                                 <small class="text-muted">Gunakan {nama}, {telp}, {npsn}, {link} untuk variabel</small>
                             </div>
@@ -180,19 +208,23 @@
                                 <table class="table table-hover" id="contactsTable">
                                     <thead>
                                         <tr>
-                                            <th>Nama</th>
-                                            <th>Telp <small class="format-info">(Format 62xxx)</small></th>
                                             <th>Direktorat</th>
+                                            <th>Jenjang</th>
                                             <th>NPSN</th>
-                                            <th>Provinsi</th>
+                                            <th>Propinsi</th>
                                             <th>Kabupaten</th>
+                                            <th>Kecamatan</th>
+                                            <th>Kelurahan</th>
+                                            <th>Nama</th>
+                                            <th>Alamat</th>
                                             <th>PIC</th>
+                                            <th>Telp</th>
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="contactsTableBody">
                                         <tr>
-                                            <td colspan="8" class="text-center">Loading data...</td>
+                                            <td colspan="12" class="text-center">Loading data...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -255,17 +287,6 @@
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Nama *</label>
-                            <input type="text" class="form-control" id="modalNama" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Nomor Telepon *</label>
-                            <input type="text" class="form-control" id="modalTelp" required 
-                                   placeholder="0813xxxxxxx, 813xxxxxxx, atau 62813xxxxxxx"
-                                   onblur="formatPhoneInput(this)">
-                            <small class="text-muted">Format apapun akan dikonversi ke 62xxx</small>
-                        </div>
-                        <div class="col-md-6 mb-3">
                             <label class="form-label">Direktorat</label>
                             <input type="text" class="form-control" id="modalDirektorat">
                         </div>
@@ -278,7 +299,7 @@
                             <input type="text" class="form-control" id="modalNPSN">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Provinsi</label>
+                            <label class="form-label">Propinsi</label>
                             <input type="text" class="form-control" id="modalPropinsi">
                         </div>
                         <div class="col-md-6 mb-3">
@@ -293,6 +314,10 @@
                             <label class="form-label">Kelurahan</label>
                             <input type="text" class="form-control" id="modalKelurahan">
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nama *</label>
+                            <input type="text" class="form-control" id="modalNama" required>
+                        </div>
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Alamat</label>
                             <textarea class="form-control" id="modalAlamat" rows="2"></textarea>
@@ -300,6 +325,13 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">PIC</label>
                             <input type="text" class="form-control" id="modalPIC">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nomor Telepon *</label>
+                            <input type="text" class="form-control" id="modalTelp" required 
+                                   placeholder="0813xxxxxxx, 813xxxxxxx, atau 62813xxxxxxx"
+                                   onblur="formatPhoneInput(this)">
+                            <small class="text-muted">Format apapun akan dikonversi ke 62xxx</small>
                         </div>
                     </div>
                 </div>
@@ -313,7 +345,7 @@
 
     <!-- Modal Import -->
     <div class="modal fade" id="importModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-info text-white">
                     <h5 class="modal-title">Import CSV</h5>
@@ -322,9 +354,56 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Upload File CSV</label>
-                        <input type="file" class="form-control" id="csvFile" accept=".csv">
-                        <small class="text-muted">Format: Nama,Telp,Direktorat,Jenjang,NPSN,Provinsi,Kabupaten,Kecamatan,Kelurahan,Alamat,PIC</small>
+                        <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="previewCSV()">
+                        <small class="text-muted">
+                            Urutan kolom: 1.Direktorat, 2.Jenjang, 3.NPSN, 4.Propinsi, 5.Kabupaten, 
+                            6.Kecamatan, 7.Kelurahan, 8.Nama, 9.Alamat, 10.PIC, 11.Telp
+                        </small>
                     </div>
+                    
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Format Kolom Wajib:</strong><br>
+                            1. Direktorat<br>
+                            2. Jenjang<br>
+                            3. NPSN<br>
+                            4. Propinsi<br>
+                            5. Kabupaten<br>
+                            6. Kecamatan<br>
+                            7. Kelurahan<br>
+                            8. Nama<br>
+                            9. Alamat<br>
+                            10. PIC<br>
+                            11. Telp (format: 0813, 813, +62813, 62813)
+                        </small>
+                    </div>
+                    
+                    <div id="csvPreview" style="display: none;">
+                        <h6>Preview Data (5 baris pertama):</h6>
+                        <div class="csv-preview border rounded p-2 bg-light mb-3">
+                            <table class="table table-sm table-bordered" id="previewTable">
+                                <thead>
+                                    <tr>
+                                        <th>Direktorat</th>
+                                        <th>Jenjang</th>
+                                        <th>NPSN</th>
+                                        <th>Propinsi</th>
+                                        <th>Kabupaten</th>
+                                        <th>Kecamatan</th>
+                                        <th>Kelurahan</th>
+                                        <th>Nama</th>
+                                        <th>Alamat</th>
+                                        <th>PIC</th>
+                                        <th>Telp</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="previewTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div class="alert alert-warning">
                         <small>
                             <i class="fas fa-exclamation-triangle"></i>
@@ -335,7 +414,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-info" onclick="processCSV()">Import</button>
+                    <button type="button" class="btn btn-info" onclick="processCSV()">Import Data</button>
                 </div>
             </div>
         </div>

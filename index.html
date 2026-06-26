@@ -359,6 +359,31 @@
             color: #25D366;
         }
         
+        /* Toast Notification */
+        .toast-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            max-width: 400px;
+            width: 90%;
+            margin: 0 auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 1; transform: translateX(-50%) translateY(0); }
+            to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+        
         /* Hide scrollbar */
         ::-webkit-scrollbar {
             width: 4px;
@@ -371,6 +396,32 @@
         ::-webkit-scrollbar-thumb {
             background: #25D366;
             border-radius: 2px;
+        }
+        
+        /* Debug Info */
+        #debugInfo {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            margin: 10px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+            border: 1px solid #dee2e6;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        #debugInfo.show {
+            display: block;
+        }
+        #debugInfo .error {
+            color: #dc3545;
+        }
+        #debugInfo .success {
+            color: #28a745;
+        }
+        #debugInfo .warning {
+            color: #ffc107;
         }
         
         /* Responsive */
@@ -417,13 +468,24 @@
                 <span>Manajemen Kontak</span>
             </h1>
             <div class="header-actions">
-                <button onclick="exportContacts()" title="Export">
+                <button onclick="exportContacts()" title="Export CSV">
                     <i class="fas fa-download"></i>
                 </button>
-                <button onclick="showImportModal()" title="Import">
+                <button onclick="showImportModal()" title="Import CSV">
                     <i class="fas fa-upload"></i>
                 </button>
+                <button onclick="toggleDebug()" title="Debug Mode" style="background: rgba(255,255,255,0.15);">
+                    <i class="fas fa-bug"></i>
+                </button>
             </div>
+        </div>
+    </div>
+    
+    <!-- Debug Info -->
+    <div id="debugInfo">
+        <div id="debugContent">
+            <small class="fw-bold">🔍 Debug Mode</small>
+            <div id="debugMessages" style="margin-top: 5px;"></div>
         </div>
     </div>
     
@@ -477,15 +539,15 @@
                     
                     <div class="mb-2">
                         <label class="form-label small fw-bold">NPSN *</label>
-                        <input type="text" class="form-control form-control-sm" id="modalNPSN" required>
+                        <input type="text" class="form-control form-control-sm" id="modalNPSN" required placeholder="Masukkan NPSN">
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-bold">Nama *</label>
-                        <input type="text" class="form-control form-control-sm" id="modalNama" required>
+                        <input type="text" class="form-control form-control-sm" id="modalNama" required placeholder="Masukkan Nama">
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-bold">PIC *</label>
-                        <input type="text" class="form-control form-control-sm" id="modalPIC" required>
+                        <input type="text" class="form-control form-control-sm" id="modalPIC" required placeholder="Masukkan PIC">
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-bold">Nomor Telepon *</label>
@@ -496,36 +558,36 @@
                     <div class="row g-2">
                         <div class="col-6">
                             <label class="form-label small fw-bold">Direktorat</label>
-                            <input type="text" class="form-control form-control-sm" id="modalDirektorat">
+                            <input type="text" class="form-control form-control-sm" id="modalDirektorat" placeholder="Direktorat">
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold">Jenjang</label>
-                            <input type="text" class="form-control form-control-sm" id="modalJenjang">
+                            <input type="text" class="form-control form-control-sm" id="modalJenjang" placeholder="Jenjang">
                         </div>
                     </div>
                     <div class="row g-2">
                         <div class="col-6">
                             <label class="form-label small fw-bold">Propinsi</label>
-                            <input type="text" class="form-control form-control-sm" id="modalPropinsi">
+                            <input type="text" class="form-control form-control-sm" id="modalPropinsi" placeholder="Propinsi">
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold">Kabupaten</label>
-                            <input type="text" class="form-control form-control-sm" id="modalKabupaten">
+                            <input type="text" class="form-control form-control-sm" id="modalKabupaten" placeholder="Kabupaten">
                         </div>
                     </div>
                     <div class="row g-2">
                         <div class="col-6">
                             <label class="form-label small fw-bold">Kecamatan</label>
-                            <input type="text" class="form-control form-control-sm" id="modalKecamatan">
+                            <input type="text" class="form-control form-control-sm" id="modalKecamatan" placeholder="Kecamatan">
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold">Kelurahan</label>
-                            <input type="text" class="form-control form-control-sm" id="modalKelurahan">
+                            <input type="text" class="form-control form-control-sm" id="modalKelurahan" placeholder="Kelurahan">
                         </div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-bold">Alamat</label>
-                        <textarea class="form-control form-control-sm" id="modalAlamat" rows="2"></textarea>
+                        <textarea class="form-control form-control-sm" id="modalAlamat" rows="2" placeholder="Alamat lengkap"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -596,7 +658,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-sm btn-danger" id="confirmDeleteBtn">
+                    <button type="button" class="btn btn-sm btn-danger" id="confirmDeleteBtn" onclick="deleteContact()">
                         <i class="fas fa-trash"></i> Hapus
                     </button>
                 </div>
@@ -606,6 +668,7 @@
 
     <!-- Firebase SDK -->
     <script type="module">
+        // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
             getFirestore, 
@@ -615,9 +678,7 @@
             updateDoc, 
             deleteDoc, 
             doc, 
-            serverTimestamp,
-            query,
-            orderBy
+            serverTimestamp
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -633,13 +694,26 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Ekspos ke window
         window.db = db;
         window.firebaseModules = {
-            collection, addDoc, getDocs, updateDoc, deleteDoc, doc, 
-            serverTimestamp, query, orderBy
+            collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp
         };
         
-        console.log("Firebase initialized successfully!");
+        console.log("✅ Firebase initialized successfully!");
+        addDebugMessage('✅ Firebase initialized successfully!', 'success');
+        
+        // Load data setelah Firebase siap
+        setTimeout(() => {
+            if (typeof loadContacts === 'function') {
+                console.log("🔄 Loading contacts from Firestore...");
+                addDebugMessage('🔄 Loading contacts from Firestore...', 'info');
+                loadContacts();
+            } else {
+                console.warn("⚠️ loadContacts function not found");
+                addDebugMessage('⚠️ loadContacts function not found - pastikan app.js sudah dimuat', 'error');
+            }
+        }, 500);
     </script>
 
     <!-- Bootstrap JS -->
@@ -647,5 +721,69 @@
     
     <!-- App JS -->
     <script src="app.js"></script>
+    
+    <script>
+        // Debug functions
+        let debugVisible = false;
+        
+        function toggleDebug() {
+            const debugEl = document.getElementById('debugInfo');
+            debugVisible = !debugVisible;
+            debugEl.classList.toggle('show');
+        }
+        
+        function addDebugMessage(message, type = 'info') {
+            const container = document.getElementById('debugMessages');
+            if (!container) return;
+            
+            const msg = document.createElement('div');
+            msg.className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            msg.textContent = message;
+            container.appendChild(msg);
+            
+            // Auto scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Override console methods to show debug
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            addDebugMessage('ℹ️ ' + args.join(' '), 'info');
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            addDebugMessage('❌ ' + args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            addDebugMessage('⚠️ ' + args.join(' '), 'warning');
+        };
+        
+        // Auto show debug if no data after 5 seconds
+        setTimeout(() => {
+            const container = document.getElementById('contactsContainer');
+            if (container && container.innerHTML.includes('Memuat kontak')) {
+                toggleDebug();
+                addDebugMessage('⚠️ Data masih loading atau gagal dimuat setelah 5 detik', 'error');
+                addDebugMessage('💡 Periksa: 1) Koneksi internet 2) Data di Firestore 3) Console untuk error', 'info');
+                addDebugMessage('💡 Coba refresh halaman atau cek tab Network di DevTools', 'info');
+            }
+        }, 5000);
+        
+        // Cek apakah app.js sudah dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (typeof loadContacts === 'function') {
+                    addDebugMessage('✅ app.js loaded successfully!', 'success');
+                }
+            }, 100);
+        });
+    </script>
 </body>
 </html>

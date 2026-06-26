@@ -1,7 +1,21 @@
+// firebase-config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    updateDoc, 
+    deleteDoc, 
+    doc, 
+    serverTimestamp,
+    query,
+    orderBy,
+    where,
+    getCountFromServer
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Konfigurasi Firebase Anda
+// Konfigurasi Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCA5Q12fvF9OLaqGBjsu_Rt3gsR1-1W2wA",
     authDomain: "send-message-a0983.firebaseapp.com",
@@ -16,5 +30,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Export fungsi yang diperlukan
-export { db, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp };
+// Export fungsi dan objek yang diperlukan untuk manajemen kontak
+export { 
+    db, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    updateDoc, 
+    deleteDoc, 
+    doc, 
+    serverTimestamp,
+    query,
+    orderBy,
+    where,
+    getCountFromServer
+};
+
+console.log("Firebase configured successfully!");

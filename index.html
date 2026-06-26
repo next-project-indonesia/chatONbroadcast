@@ -2,324 +2,603 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Broadcast System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Manajemen Kontak</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            padding-bottom: 80px;
+        }
+        
+        /* Header Mobile */
+        .app-header {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        
+        .app-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .app-header h1 i {
+            font-size: 22px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .header-actions button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .header-actions button:active {
+            transform: scale(0.9);
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Search Bar */
+        .search-container {
+            padding: 12px 16px;
+            background: white;
+            position: sticky;
+            top: 70px;
+            z-index: 999;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        
+        .search-container .input-group {
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        
+        .search-container .input-group input {
+            border: none;
+            padding: 10px 16px;
+            font-size: 14px;
+            background: #f8f9fa;
+        }
+        
+        .search-container .input-group input:focus {
+            box-shadow: none;
+            background: white;
+        }
+        
+        .search-container .input-group button {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 0 18px;
+        }
+        
+        /* Stats */
+        .stats-bar {
+            background: white;
+            padding: 10px 16px;
+            margin: 0 12px 12px 12px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stats-bar .total {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .stats-bar .total strong {
+            color: #25D366;
+            font-size: 16px;
+        }
+        
+        .stats-bar .badge-count {
+            background: #25D366;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* Contact Cards */
+        .contacts-container {
+            padding: 0 12px;
+        }
+        
+        .contact-card {
+            background: white;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+            border-left: 4px solid #25D366;
+        }
+        
+        .contact-card:active {
+            transform: scale(0.98);
+        }
+        
+        .contact-card .contact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .contact-card .contact-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #1a1a1a;
+            margin: 0;
+            flex: 1;
+        }
+        
+        .contact-card .contact-npsn {
+            font-size: 12px;
+            color: #888;
+            background: #f0f2f5;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+        
+        .contact-card .contact-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 12px;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        
+        .contact-card .contact-details .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .contact-card .contact-details .detail-item i {
+            width: 16px;
+            font-size: 12px;
+            color: #25D366;
+        }
+        
+        .contact-card .contact-phone {
+            font-size: 14px;
+            font-weight: 500;
+            color: #25D366;
+            background: #f0faf5;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        
+        .contact-card .contact-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .contact-card .contact-actions button {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 20px;
+            border: none;
+            background: #f0f2f5;
+            color: #555;
+            transition: all 0.2s;
+            flex: 1;
+        }
+        
+        .contact-card .contact-actions button:active {
+            transform: scale(0.95);
+        }
+        
+        .contact-card .contact-actions .btn-edit {
+            background: #e3f2fd;
+            color: #1976D2;
+        }
+        
+        .contact-card .contact-actions .btn-delete {
+            background: #fce4ec;
+            color: #D32F2F;
+        }
+        
+        .contact-card .contact-actions .btn-wa {
+            background: #25D366;
+            color: white;
+            flex: 0.7;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            color: #d4d4d4;
+            margin-bottom: 16px;
+            display: block;
+        }
+        
+        .empty-state h5 {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        /* Floating Action Button */
+        .fab-add {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .fab-add:active {
+            transform: scale(0.9);
+        }
+        
+        .fab-import {
+            position: fixed;
+            bottom: 90px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: white;
+            color: #25D366;
+            border: 2px solid #25D366;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .fab-import:active {
+            transform: scale(0.9);
+        }
+        
+        /* Modal adjustments for mobile */
+        .modal-content {
+            border-radius: 16px 16px 0 0;
+            margin-top: auto;
+        }
+        
+        .modal-dialog {
+            margin: 0;
+            align-items: flex-end;
+            min-height: 100vh;
+        }
+        
+        .modal.fade .modal-dialog {
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+        }
+        
+        .modal.fade.show .modal-dialog {
+            transform: translateY(0);
+        }
+        
+        .modal-body {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            border-radius: 16px 16px 0 0;
+            padding: 16px 20px;
+        }
+        
+        /* Loading */
+        .loading-spinner {
+            text-align: center;
+            padding: 40px 0;
+            color: #999;
+        }
+        
+        .loading-spinner i {
+            font-size: 32px;
+            margin-bottom: 12px;
+            display: block;
+            color: #25D366;
+        }
+        
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #25D366;
+            border-radius: 2px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .contact-card .contact-details {
+                grid-template-columns: 1fr;
+                gap: 2px;
+            }
+            
+            .contact-card .contact-actions {
+                flex-wrap: wrap;
+            }
+            
+            .contact-card .contact-actions button {
+                flex: 1 1 30%;
+                min-width: 60px;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .contacts-container {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            
+            .search-container {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            
+            .stats-bar {
+                max-width: 600px;
+                margin: 0 auto 12px auto;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar p-0">
-                <div class="logo">
-                    <h3><i class="fab fa-whatsapp"></i> Broadcast</h3>
-                </div>
-                <nav class="nav flex-column p-3">
-                    <!-- <a class="nav-link active" href="#broadcast" onclick="showPage('broadcast')">
-                        <i class="fas fa-broadcast-tower"></i> Broadcast
-                    </a> -->
-                    <a class="nav-link" href="#kontak" onclick="showPage('kontak')">
-                        <i class="fas fa-address-book"></i> Kontak
-                    </a>
-                    <a class="nav-link" href="#riwayat" onclick="showPage('riwayat')">
-                        <i class="fas fa-history"></i> Riwayat
-                    </a>
-                    <!-- Tombol Reset (Tersembunyi) -->
-                    <div class="admin-actions mt-5" style="display: none;" id="adminActions">
-                        <hr class="bg-light">
-                        <button class="btn btn-danger btn-sm w-100" onclick="confirmResetAll()">
-                            <i class="fas fa-trash"></i> Reset All Data
-                        </button>
-                    </div>
-                </nav>
-            </div>
-
-            <!-- Main Content -->
-    
-                <!-- Kontak Page -->
-                <div id="kontak-page" class="page-content" style="display: none;">
-                    <h2 class="mb-4"><i class="fas fa-address-book"></i> Manajemen Kontak</h2>
-                    
-                    <div class="card">
-                        <div class="card-header bg-success text-white">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                <h5 class="mb-0">Daftar Kontak</h5>
-                                <div class="mt-2 mt-md-0">
-                                    <div class="input-group me-2 mb-2" style="width: 200px;">
-                                        <input type="text" class="form-control form-control-sm" 
-                                               id="searchContact" placeholder="Cari NPSN/Nama...">
-                                        <button class="btn btn-outline-light btn-sm" onclick="searchContacts()">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                    </div>
-                                    <!-- <button class="btn btn-light btn-sm me-2 mb-2" onclick="exportContacts()">
-                                        <i class="fas fa-download"></i> Export
-                                    </button> -->
-                                    <button class="btn btn-light btn-sm me-2 mb-2" onclick="importContacts()">
-                                        <i class="fas fa-upload"></i> Import
-                                    </button>
-                                    <button class="btn btn-light btn-sm mb-2" onclick="addNewContact()">
-                                        <i class="fas fa-plus"></i> Tambah
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle"></i> Format telepon akan otomatis dikonversi ke 62xxx
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="contactsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Direktorat</th>
-                                            <th>Jenjang</th>
-                                            <th>NPSN</th>
-                                            <th>Propinsi</th>
-                                            <th>Kabupaten</th>
-                                            <th>Kecamatan</th>
-                                            <th>Kelurahan</th>
-                                            <th>Nama</th>
-                                            <th>Alamat</th>
-                                            <th>PIC</th>
-                                            <th>Telp</th>
-                                            <th>Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="contactsTableBody">
-                                        <tr>
-                                            <td colspan="12" class="text-center">Loading data...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <div id="contactCount">Total: 0 kontak</div>
-                                <nav>
-                                    <ul class="pagination pagination-sm mb-0" id="pagination">
-                                    </ul>
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Riwayat Page -->
-                <div id="riwayat-page" class="page-content" style="display: none;">
-                    <h2 class="mb-4"><i class="fas fa-history"></i> Riwayat Broadcast</h2>
-                    
-                    <div class="card">
-                        <div class="card-header bg-secondary text-white">
-                            <h5 class="mb-0">Riwayat Pengiriman</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Tanggal</th>
-                                            <th>Pesan</th>
-                                            <th>Jumlah</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="historyTableBody">
-                                        <tr>
-                                            <td colspan="4" class="text-center">Belum ada riwayat</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Header -->
+    <div class="app-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>
+                <i class="fab fa-whatsapp"></i>
+                <span>Manajemen Kontak</span>
+            </h1>
+            <div class="header-actions">
+                <button onclick="exportContacts()" title="Export">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button onclick="showImportModal()" title="Import">
+                    <i class="fas fa-upload"></i>
+                </button>
             </div>
         </div>
     </div>
-
+    
+    <!-- Search -->
+    <div class="search-container">
+        <div class="input-group">
+            <input type="text" class="form-control" id="searchContact" 
+                   placeholder="Cari NPSN, nama, atau PIC..." 
+                   onkeyup="searchContacts()">
+            <button onclick="searchContacts()">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats-bar">
+        <span class="total">Total <strong id="contactCount">0</strong> kontak</span>
+        <span class="badge-count" id="shownCount">0 ditampilkan</span>
+    </div>
+    
+    <!-- Contacts List -->
+    <div class="contacts-container" id="contactsContainer">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Memuat kontak...</span>
+        </div>
+    </div>
+    
+    <!-- FAB Buttons -->
+    <button class="fab-import" onclick="showImportModal()" title="Import CSV">
+        <i class="fas fa-upload"></i>
+    </button>
+    <button class="fab-add" onclick="addNewContact()" title="Tambah Kontak">
+        <i class="fas fa-plus"></i>
+    </button>
+    
     <!-- Modal Kontak -->
     <div class="modal fade" id="contactModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-dialog-bottom">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">Tambah/Ubah Kontak</h5>
+                    <h6 class="modal-title" id="modalTitle"><i class="fas fa-user-plus"></i> Tambah Kontak</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-warning">
+                    <div class="alert alert-warning small">
                         <i class="fas fa-exclamation-triangle"></i> 
-                        Format telepon akan otomatis dikonversi. Contoh: 
-                        <ul class="mb-0 mt-1">
-                            <li>0813xxxxxxx → 62813xxxxxxx</li>
-                            <li>813xxxxxxx → 62813xxxxxxx</li>
-                            <li>+62813xxxxxxx → 62813xxxxxxx</li>
-                        </ul>
+                        Format telepon otomatis dikonversi ke 62xxx
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Direktorat</label>
-                            <input type="text" class="form-control" id="modalDirektorat">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">NPSN *</label>
+                        <input type="text" class="form-control form-control-sm" id="modalNPSN" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Nama *</label>
+                        <input type="text" class="form-control form-control-sm" id="modalNama" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">PIC *</label>
+                        <input type="text" class="form-control form-control-sm" id="modalPIC" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Nomor Telepon *</label>
+                        <input type="tel" class="form-control form-control-sm" id="modalTelp" required 
+                               placeholder="0813xxxxxxx" onblur="formatPhoneInput(this)">
+                        <small class="text-muted" style="font-size: 10px;">0813, 813, +62813, atau 62813</small>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Direktorat</label>
+                            <input type="text" class="form-control form-control-sm" id="modalDirektorat">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Jenjang</label>
-                            <input type="text" class="form-control" id="modalJenjang">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Jenjang</label>
+                            <input type="text" class="form-control form-control-sm" id="modalJenjang">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">NPSN *</label>
-                            <input type="text" class="form-control" id="modalNPSN" required>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Propinsi</label>
+                            <input type="text" class="form-control form-control-sm" id="modalPropinsi">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Propinsi</label>
-                            <input type="text" class="form-control" id="modalPropinsi">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Kabupaten</label>
+                            <input type="text" class="form-control form-control-sm" id="modalKabupaten">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Kabupaten</label>
-                            <input type="text" class="form-control" id="modalKabupaten">
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Kecamatan</label>
+                            <input type="text" class="form-control form-control-sm" id="modalKecamatan">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Kecamatan</label>
-                            <input type="text" class="form-control" id="modalKecamatan">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Kelurahan</label>
+                            <input type="text" class="form-control form-control-sm" id="modalKelurahan">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Kelurahan</label>
-                            <input type="text" class="form-control" id="modalKelurahan">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Nama *</label>
-                            <input type="text" class="form-control" id="modalNama" required>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">Alamat</label>
-                            <textarea class="form-control" id="modalAlamat" rows="2"></textarea>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">PIC *</label>
-                            <input type="text" class="form-control" id="modalPIC" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Nomor Telepon *</label>
-                            <input type="text" class="form-control" id="modalTelp" required 
-                                   placeholder="0813xxxxxxx, 813xxxxxxx, atau 62813xxxxxxx"
-                                   onblur="formatPhoneInput(this)">
-                            <small class="text-muted">Format apapun akan dikonversi ke 62xxx</small>
-                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Alamat</label>
+                        <textarea class="form-control form-control-sm" id="modalAlamat" rows="2"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-success" onclick="saveContact()">Simpan</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-sm btn-success" onclick="saveContact()">
+                        <i class="fas fa-check"></i> Simpan
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-
+    
     <!-- Modal Import -->
     <div class="modal fade" id="importModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-dialog-bottom">
             <div class="modal-content">
                 <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title">Import CSV</h5>
+                    <h6 class="modal-title"><i class="fas fa-upload"></i> Import CSV</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Upload File CSV</label>
-                        <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="previewCSV()">
-                        <small class="text-muted">
-                            Urutan kolom: 1.Direktorat, 2.Jenjang, 3.NPSN, 4.Propinsi, 5.Kabupaten, 
+                        <label class="form-label small fw-bold">Upload File CSV</label>
+                        <input type="file" class="form-control form-control-sm" id="csvFile" accept=".csv" onchange="previewCSV()">
+                        <small class="text-muted" style="font-size: 10px;">
+                            Urutan: 1.Direktorat, 2.Jenjang, 3.NPSN, 4.Propinsi, 5.Kabupaten, 
                             6.Kecamatan, 7.Kelurahan, 8.Nama, 9.Alamat, 10.PIC, 11.Telp
                         </small>
                     </div>
                     
-                    <div class="alert alert-info">
-                        <small>
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Format Kolom Wajib:</strong><br>
-                            1. Direktorat<br>
-                            2. Jenjang<br>
-                            3. NPSN<br>
-                            4. Propinsi<br>
-                            5. Kabupaten<br>
-                            6. Kecamatan<br>
-                            7. Kelurahan<br>
-                            8. Nama<br>
-                            9. Alamat<br>
-                            10. PIC<br>
-                            11. Telp (format: 0813, 813, +62813, 62813)
-                        </small>
-                    </div>
-                    
                     <div id="csvPreview" style="display: none;">
-                        <h6>Preview Data (5 baris pertama):</h6>
-                        <div class="csv-preview border rounded p-2 bg-light mb-3">
-                            <table class="table table-sm table-bordered" id="previewTable">
+                        <small class="fw-bold">Preview Data:</small>
+                        <div class="csv-preview border rounded p-2 bg-light mb-2" style="max-height: 200px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered mb-0" id="previewTable" style="font-size: 11px;">
                                 <thead>
                                     <tr>
-                                        <th>Direktorat</th>
-                                        <th>Jenjang</th>
                                         <th>NPSN</th>
-                                        <th>Propinsi</th>
-                                        <th>Kabupaten</th>
-                                        <th>Kecamatan</th>
-                                        <th>Kelurahan</th>
                                         <th>Nama</th>
-                                        <th>Alamat</th>
                                         <th>PIC</th>
                                         <th>Telp</th>
                                     </tr>
                                 </thead>
-                                <tbody id="previewTableBody">
-                                </tbody>
+                                <tbody id="previewTableBody"></tbody>
                             </table>
                         </div>
                     </div>
-                    
-                    <div class="alert alert-warning">
-                        <small>
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Format telepon akan dikonversi otomatis ke 62xxx<br>
-                            Menerima: 0813, 813, +62813, 62813
-                        </small>
-                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-info" onclick="processCSV()">Import Data</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-sm btn-info" onclick="processCSV()">
+                        <i class="fas fa-check"></i> Import
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Modal Reset All -->
-    <div class="modal fade" id="resetModal" tabindex="-1">
-        <div class="modal-dialog">
+    
+    <!-- Modal Delete Confirmation -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-bottom">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Reset All Data</h5>
+                    <h6 class="modal-title"><i class="fas fa-trash"></i> Hapus Kontak</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                        <h5>PERINGATAN!</h5>
-                        <p>Anda akan menghapus <strong>SELURUH DATA</strong> termasuk:</p>
-                        <ul>
-                            <li>Semua kontak</li>
-                            <li>Semua riwayat broadcast</li>
-                        </ul>
-                        <p class="mb-0">Tindakan ini <strong>TIDAK DAPAT DIBATALKAN!</strong></p>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Ketik "DELETE ALL" untuk konfirmasi:</label>
-                        <input type="text" class="form-control" id="confirmDelete" placeholder="DELETE ALL">
-                    </div>
+                    <p class="mb-0">Yakin ingin menghapus kontak ini? Tindakan tidak dapat dibatalkan.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-danger" onclick="resetAllData()">Reset Semua Data</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
                 </div>
             </div>
         </div>
@@ -327,7 +606,6 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        // Firebase Config
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
             getFirestore, 
@@ -339,8 +617,7 @@
             doc, 
             serverTimestamp,
             query,
-            where,
-            getCountFromServer
+            orderBy
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -356,23 +633,13 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Ekspos ke window untuk digunakan di app.js
         window.db = db;
         window.firebaseModules = {
             collection, addDoc, getDocs, updateDoc, deleteDoc, doc, 
-            serverTimestamp, query, where, getCountFromServer
+            serverTimestamp, query, orderBy
         };
         
         console.log("Firebase initialized successfully!");
-        
-        // Show admin button after 5 seconds (hidden feature)
-        setTimeout(() => {
-            const adminActions = document.getElementById('adminActions');
-            if (adminActions) {
-                adminActions.style.display = 'block';
-                console.log('Admin actions enabled');
-            }
-        }, 5000);
     </script>
 
     <!-- Bootstrap JS -->

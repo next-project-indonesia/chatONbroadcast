@@ -19,7 +19,6 @@
             padding-bottom: 80px;
         }
         
-        /* Header Mobile */
         .app-header {
             background: linear-gradient(135deg, #25D366, #128C7E);
             color: white;
@@ -68,7 +67,6 @@
             background: rgba(255,255,255,0.3);
         }
         
-        /* Search Bar */
         .search-container {
             padding: 12px 16px;
             background: white;
@@ -103,7 +101,6 @@
             padding: 0 18px;
         }
         
-        /* Stats */
         .stats-bar {
             background: white;
             padding: 10px 16px;
@@ -134,7 +131,6 @@
             font-weight: 500;
         }
         
-        /* Contact Cards */
         .contacts-container {
             padding: 0 12px;
         }
@@ -247,7 +243,6 @@
             flex: 0.7;
         }
         
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -266,7 +261,6 @@
             font-weight: 500;
         }
         
-        /* Floating Action Button */
         .fab-add {
             position: fixed;
             bottom: 24px;
@@ -313,7 +307,6 @@
             transform: scale(0.9);
         }
         
-        /* Modal adjustments for mobile */
         .modal-content {
             border-radius: 16px 16px 0 0;
             margin-top: auto;
@@ -345,7 +338,6 @@
             padding: 16px 20px;
         }
         
-        /* Loading */
         .loading-spinner {
             text-align: center;
             padding: 40px 0;
@@ -359,7 +351,6 @@
             color: #25D366;
         }
         
-        /* Toast Notification */
         .toast-message {
             position: fixed;
             top: 20px;
@@ -384,7 +375,6 @@
             to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
         }
         
-        /* Hide scrollbar */
         ::-webkit-scrollbar {
             width: 4px;
         }
@@ -398,33 +388,92 @@
             border-radius: 2px;
         }
         
-        /* Debug Info */
-        #debugInfo {
-            background: #f8f9fa;
-            padding: 10px 15px;
-            margin: 10px 12px;
-            border-radius: 8px;
+        /* Debug Panel */
+        #debugPanel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 50vh;
+            background: #1a1a2e;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
             font-size: 12px;
-            color: #666;
-            border: 1px solid #dee2e6;
-            display: none;
-            max-height: 200px;
+            padding: 12px 16px;
             overflow-y: auto;
-        }
-        #debugInfo.show {
-            display: block;
-        }
-        #debugInfo .error {
-            color: #dc3545;
-        }
-        #debugInfo .success {
-            color: #28a745;
-        }
-        #debugInfo .warning {
-            color: #ffc107;
+            z-index: 99999;
+            display: none;
+            border-top: 2px solid #00ff88;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
         }
         
-        /* Responsive */
+        #debugPanel.show {
+            display: block;
+        }
+        
+        #debugPanel .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        #debugPanel .debug-header button {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 2px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        #debugPanel .debug-line {
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        #debugPanel .debug-line .time {
+            color: #666;
+            margin-right: 10px;
+        }
+        
+        #debugPanel .debug-line .error {
+            color: #ff4757;
+        }
+        
+        #debugPanel .debug-line .success {
+            color: #00ff88;
+        }
+        
+        #debugPanel .debug-line .warning {
+            color: #ffa502;
+        }
+        
+        .debug-toggle {
+            position: fixed;
+            bottom: 150px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1a1a2e;
+            color: #00ff88;
+            border: 2px solid #00ff88;
+            font-size: 14px;
+            z-index: 99998;
+            display: none;
+        }
+        
+        .debug-toggle.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
         @media (max-width: 480px) {
             .contact-card .contact-details {
                 grid-template-columns: 1fr;
@@ -474,18 +523,13 @@
                 <button onclick="showImportModal()" title="Import CSV">
                     <i class="fas fa-upload"></i>
                 </button>
-                <button onclick="toggleDebug()" title="Debug Mode" style="background: rgba(255,255,255,0.15);">
-                    <i class="fas fa-bug"></i>
+                <button onclick="toggleDebugPanel()" title="Debug Panel" style="background: rgba(255,255,255,0.15);">
+                    <i class="fas fa-terminal"></i>
+                </button>
+                <button onclick="loadContacts()" title="Refresh Data" style="background: rgba(255,255,255,0.15);">
+                    <i class="fas fa-sync"></i>
                 </button>
             </div>
-        </div>
-    </div>
-    
-    <!-- Debug Info -->
-    <div id="debugInfo">
-        <div id="debugContent">
-            <small class="fw-bold">🔍 Debug Mode</small>
-            <div id="debugMessages" style="margin-top: 5px;"></div>
         </div>
     </div>
     
@@ -522,6 +566,18 @@
     <button class="fab-add" onclick="addNewContact()" title="Tambah Kontak">
         <i class="fas fa-plus"></i>
     </button>
+    
+    <!-- Debug Panel -->
+    <div id="debugPanel">
+        <div class="debug-header">
+            <span>🐛 DEBUG CONSOLE</span>
+            <div>
+                <button onclick="clearDebug()">Clear</button>
+                <button onclick="toggleDebugPanel()" style="background:#ff4757;margin-left:5px;">Close</button>
+            </div>
+        </div>
+        <div id="debugLogs"></div>
+    </div>
     
     <!-- Modal Kontak -->
     <div class="modal fade" id="contactModal" tabindex="-1">
@@ -668,7 +724,6 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
             getFirestore, 
@@ -678,7 +733,9 @@
             updateDoc, 
             deleteDoc, 
             doc, 
-            serverTimestamp
+            serverTimestamp,
+            query,
+            orderBy
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -691,29 +748,32 @@
             measurementId: "G-0HFN3D351S"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Ekspos ke window
-        window.db = db;
-        window.firebaseModules = {
-            collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp
-        };
-        
-        console.log("✅ Firebase initialized successfully!");
-        addDebugMessage('✅ Firebase initialized successfully!', 'success');
-        
-        // Load data setelah Firebase siap
-        setTimeout(() => {
-            if (typeof loadContacts === 'function') {
-                console.log("🔄 Loading contacts from Firestore...");
-                addDebugMessage('🔄 Loading contacts from Firestore...', 'info');
-                loadContacts();
-            } else {
-                console.warn("⚠️ loadContacts function not found");
-                addDebugMessage('⚠️ loadContacts function not found - pastikan app.js sudah dimuat', 'error');
-            }
-        }, 500);
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            
+            window.db = db;
+            window.firebaseModules = {
+                collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy
+            };
+            
+            debugLog('✅ Firebase initialized successfully!', 'success');
+            console.log('✅ Firebase initialized successfully!');
+            
+            // Load data
+            setTimeout(() => {
+                if (typeof loadContacts === 'function') {
+                    debugLog('🔄 Loading contacts from Firestore...', 'info');
+                    loadContacts();
+                } else {
+                    debugLog('⚠️ loadContacts function not found - app.js not loaded', 'error');
+                }
+            }, 500);
+            
+        } catch (error) {
+            debugLog('❌ Firebase initialization error: ' + error.message, 'error');
+            console.error('Firebase initialization error:', error);
+        }
     </script>
 
     <!-- Bootstrap JS -->
@@ -723,67 +783,153 @@
     <script src="app.js"></script>
     
     <script>
-        // Debug functions
-        let debugVisible = false;
+        // Debug Panel Functions
+        let debugPanelVisible = false;
         
-        function toggleDebug() {
-            const debugEl = document.getElementById('debugInfo');
-            debugVisible = !debugVisible;
-            debugEl.classList.toggle('show');
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debugPanel');
+            debugPanelVisible = !debugPanelVisible;
+            panel.classList.toggle('show');
+            if (debugPanelVisible) {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
         }
         
-        function addDebugMessage(message, type = 'info') {
-            const container = document.getElementById('debugMessages');
+        function debugLog(message, type = 'info') {
+            const container = document.getElementById('debugLogs');
             if (!container) return;
             
-            const msg = document.createElement('div');
-            msg.className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
-            msg.textContent = message;
-            container.appendChild(msg);
+            const line = document.createElement('div');
+            line.className = 'debug-line';
             
-            // Auto scroll to bottom
+            const time = new Date().toLocaleTimeString();
+            const typeClass = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            
+            line.innerHTML = `
+                <span class="time">[${time}]</span>
+                <span class="${typeClass}">${icon} ${message}</span>
+            `;
+            
+            container.appendChild(line);
             container.scrollTop = container.scrollHeight;
         }
         
-        // Override console methods to show debug
-        const originalConsoleLog = console.log;
-        const originalConsoleError = console.error;
-        const originalConsoleWarn = console.warn;
+        function clearDebug() {
+            const container = document.getElementById('debugLogs');
+            if (container) {
+                container.innerHTML = '';
+            }
+        }
+        
+        // Override console methods
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
         
         console.log = function(...args) {
-            originalConsoleLog.apply(console, args);
-            addDebugMessage('ℹ️ ' + args.join(' '), 'info');
+            originalLog.apply(console, args);
+            debugLog(args.join(' '), 'info');
         };
         
         console.error = function(...args) {
-            originalConsoleError.apply(console, args);
-            addDebugMessage('❌ ' + args.join(' '), 'error');
+            originalError.apply(console, args);
+            debugLog(args.join(' '), 'error');
         };
         
         console.warn = function(...args) {
-            originalConsoleWarn.apply(console, args);
-            addDebugMessage('⚠️ ' + args.join(' '), 'warning');
+            originalWarn.apply(console, args);
+            debugLog(args.join(' '), 'warning');
         };
         
-        // Auto show debug if no data after 5 seconds
-        setTimeout(() => {
-            const container = document.getElementById('contactsContainer');
-            if (container && container.innerHTML.includes('Memuat kontak')) {
-                toggleDebug();
-                addDebugMessage('⚠️ Data masih loading atau gagal dimuat setelah 5 detik', 'error');
-                addDebugMessage('💡 Periksa: 1) Koneksi internet 2) Data di Firestore 3) Console untuk error', 'info');
-                addDebugMessage('💡 Coba refresh halaman atau cek tab Network di DevTools', 'info');
-            }
-        }, 5000);
+        // Show debug panel automatically if error
+        window.addEventListener('error', function(e) {
+            debugLog('Uncaught error: ' + e.message, 'error');
+            if (!debugPanelVisible) toggleDebugPanel();
+        });
         
-        // Cek apakah app.js sudah dimuat
+        // Check if app.js is loaded
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 if (typeof loadContacts === 'function') {
-                    addDebugMessage('✅ app.js loaded successfully!', 'success');
+                    debugLog('✅ app.js loaded successfully!', 'success');
+                } else {
+                    debugLog('⚠️ app.js not loaded - check file path', 'error');
+                    if (!debugPanelVisible) toggleDebugPanel();
                 }
-            }, 100);
+            }, 1000);
         });
+        
+        // Auto open debug if data fails to load
+        setTimeout(() => {
+            const container = document.getElementById('contactsContainer');
+            if (container && container.innerHTML.includes('Memuat kontak')) {
+                debugLog('⚠️ Data failed to load after 5 seconds', 'error');
+                debugLog('💡 Possible causes:', 'info');
+                debugLog('   1. Firebase connection issue', 'info');
+                debugLog('   2. No data in Firestore "contacts" collection', 'info');
+                debugLog('   3. CORS or network issue', 'info');
+                debugLog('   4. Check browser console for errors', 'info');
+                if (!debugPanelVisible) toggleDebugPanel();
+                
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle" style="color: #ff6b6b;"></i>
+                        <h5 style="color: #ff6b6b;">Gagal Memuat Data</h5>
+                        <p style="font-size: 13px; color: #999;">Klik tombol refresh (🔄) untuk mencoba lagi</p>
+                        <button class="btn btn-sm btn-success" onclick="loadContacts()">
+                            <i class="fas fa-sync"></i> Refresh Data
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary mt-2" onclick="toggleDebugPanel()">
+                            <i class="fas fa-terminal"></i> Lihat Debug
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger mt-2" onclick="testFirebaseConnection()">
+                            <i class="fas fa-wifi"></i> Test Connection
+                        </button>
+                    </div>
+                `;
+            }
+        }, 5000);
+        
+        // Test Firebase Connection
+        function testFirebaseConnection() {
+            debugLog('🔍 Testing Firebase connection...', 'info');
+            
+            if (!window.db) {
+                debugLog('❌ Database not initialized!', 'error');
+                return;
+            }
+            
+            const testData = {
+                _test: true,
+                timestamp: new Date().toISOString()
+            };
+            
+            window.firebaseModules.addDoc(
+                window.firebaseModules.collection(window.db, "contacts"),
+                testData
+            ).then((docRef) => {
+                debugLog('✅ Firebase write successful!', 'success');
+                
+                // Delete test data
+                return window.firebaseModules.deleteDoc(docRef);
+            }).then(() => {
+                debugLog('✅ Firebase delete successful! Connection is working.', 'success');
+                showToast('Koneksi Firebase berhasil!', 'success');
+                loadContacts();
+            }).catch((error) => {
+                debugLog('❌ Firebase test failed: ' + error.message, 'error');
+                showToast('Gagal koneksi ke Firebase: ' + error.message, 'danger');
+            });
+        }
+        
+        // Make functions global
+        window.toggleDebugPanel = toggleDebugPanel;
+        window.debugLog = debugLog;
+        window.clearDebug = clearDebug;
+        window.testFirebaseConnection = testFirebaseConnection;
     </script>
 </body>
 </html>
